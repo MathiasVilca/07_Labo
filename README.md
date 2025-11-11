@@ -1,3 +1,4 @@
+### NOTA: Este repositorio se creo originalmente el 9/10, pero por un error el repositorio se elimino
 ## Adapter
 1. Se podria garantizar la validez del contrato definiendo una interfaz para los Adaptadores, la cual los obligue a definir un metodo `outputs()`. Respecto a pruebas unitarias, se puede probar que la salida del método `outputs()` es la esperada (en este caso, un array de tuplas de tres strings cada una) haciendo uso de `@pytest.mark.parametrize` para definir varios casos y sus salidas esperadas
 
