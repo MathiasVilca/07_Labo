@@ -1,4 +1,5 @@
 ### NOTA: Este repositorio se creo originalmente el 9/10, pero por un error el repositorio se elimino
+### NOTA 2: Los archivos relevantes se incluiran en las carpetas con el nombre de cada seccion de laboratorio, las cuales se añadiran poco a poco
 ## Adapter
 1. Se podria garantizar la validez del contrato definiendo una interfaz para los Adaptadores, la cual los obligue a definir un metodo `outputs()`. Respecto a pruebas unitarias, se puede probar que la salida del método `outputs()` es la esperada (en este caso, un array de tuplas de tres strings cada una) haciendo uso de `@pytest.mark.parametrize` para definir varios casos y sus salidas esperadas
 
@@ -187,3 +188,9 @@ jobs:
 
 ```
 
+## Facade
+1. 
+ - Diagrama incluido en `02_Facade/`
+ - Se usa Facade para desacople porque permite la independencia entre módulos (ahora se depende del facade), al uno estar separado del otro, no se usa Adapter porque este esta para adaptar (como indica su nombre) interfaces incompatibles, no "desacopla" nada.
+ - Pros: El desacople, hacer cambios es más sencillo (en un solo lugar)  
+   Contras: Se puede volver complejo de implementar si crece mucho
