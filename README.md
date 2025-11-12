@@ -147,4 +147,43 @@ class LocalIdentityAdapter:
 ```
 El terraform detecta que la configuracion sigue siendo válida y no muestra cambios necesarios en el plan
 
-6. 
+6. Se creo el siguiente workflow, el cual estaria en .github/workflows/CICD.yml
+```yaml
+name: Pipeline simple
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Generate main.tf.json
+        run: python main.py
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Inicializar terraform
+        run: terraform init -input=false
+
+      - name: Ejecutar terraform validate
+        run: terraform validate
+
+      - name: Ejecutar terraform plan
+        run: terraform plan
+
+```
+
