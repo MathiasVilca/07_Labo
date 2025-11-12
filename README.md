@@ -194,3 +194,42 @@ jobs:
  - Se usa Facade para desacople porque permite la independencia entre módulos (ahora se depende del facade), al uno estar separado del otro, no se usa Adapter porque este esta para adaptar (como indica su nombre) interfaces incompatibles, no "desacopla" nada.
  - Pros: El desacople, hacer cambios es más sencillo (en un solo lugar)  
    Contras: Se puede volver complejo de implementar si crece mucho
+2. 
+ - La abstaccion sería el método `outputs()` ya que "esconde" los detalles de implementación del Módulo de Bucket al Módulo de Acceso
+ - Propongo el siguiente cambio:
+```python
+class StorageBucketModule:
+    def __init__(self, name_base, buckets_dir="./buckets",interpreter="python3"):
+        self.name = f"{name_base}-storage-bucket"
+        self.buckets_dir = buckets_dir
+        self.interpreter = interpreter
+
+    def resource(self):
+        return {
+            "null_resource": {
+                "storage_bucket": {
+                    "triggers": {"name": self.name},
+                    "provisioner": [{
+                        "local-exec": {
+                            "interpreter": [self.interpreter, "-c"],
+                            "command": (
+                                f"import pathlib; "
+                                f"pathlib.Path(r'{self.buckets_dir}/{self.name}').mkdir(parents=True, exist_ok=True)"
+                            )
+                        }
+                    }]
+                }
+            }
+        }
+```
+ - Mejora la adherencia ya que ahora si se quiere cambiar al intérprete (ej. una versión mas antigua de python), se puede hacer simplemente cambiando la inicialización del Modulo de bucket, aunque tiene espacio para mejoras (ej. no todos los interpretes tienen el comando "-c")
+
+3. 
+ - Considerando que el Facade del bucket es usado en varios módulos y que expone mas atributos como `path`, un cambio de nombre como `path` -> `bucket_path` requeriría refactorizar todas las clases que usen el facade específicamente por `path` (porque `bucket_facade["path"]` daría error, lo cual suponiendo que los 10 módulos usan sería trabajoso
+ - Se puede subdividir el Facade (ej. crear varias clases Facade, cada una con un bucket de atributo y cada uno retorne un atributo especifico del bucket, como puede ser `BucketPathFacade` con metodo `outputs()` que retorna `bucket["path"]`, si cambia el nombre, solo se modificaría el Facade) o crear un "mediador" como puede ser una API interna (ej. crear una clase Facade la cual tenga un bucket de atributo, y con un metodo que con un argumento se le pueda especificar el(los) atributo(s) del bucket que se buscan). El primero es mejor en proyectos pequeños con módulos independientes, mientras el segundo es mejor en proyectos grandes con cambios frecuentes de esquema de datos.
+4. Cambios presentes en `02_Facade/main.py`  
+Ejemplos de ejecucion:
+
+
+ 
+
