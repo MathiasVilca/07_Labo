@@ -1,0 +1,43 @@
+resource:
+- null_resource:
+    identity_audit_team_read:
+      triggers:
+        user: audit-team
+        identity: audit-team
+        role: read
+- null_resource:
+    identity_user_01_read:
+      triggers:
+        user: user-01
+        identity: user-01
+        role: read
+- null_resource:
+    identity_user_02_read:
+      triggers:
+        user: user-02
+        identity: user-02
+        role: read
+- null_resource:
+    identity_infrastructure_team_write:
+      triggers:
+        user: infrastructure-team
+        identity: infrastructure-team
+        role: write
+- null_resource:
+    identity_user_03_write:
+      triggers:
+        user: user-03
+        identity: user-03
+        role: write
+- null_resource:
+    identity_automation_01_write:
+      triggers:
+        user: automation-01
+        identity: automation-01
+        role: write
+- null_resource:
+    identity_manager_team_admin:
+      triggers:
+        user: manager-team
+        identity: manager-team
+        role: admin

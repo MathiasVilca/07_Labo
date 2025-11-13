@@ -1,0 +1,22 @@
+{
+  "resource": {
+    "null_resource": {
+      "logging": {
+        "depends_on": [
+          "null_resource.bucket_access"
+        ],
+        "provisioner": [
+          {
+            "local-exec": {
+              "interpreter": [
+                "python3",
+                "-c"
+              ],
+              "command": "import pathlib; pathlib.Path('logs').mkdir(exist_ok=True); open('logs/iac.log', 'w').write('Ejecuci\u00f3n completa\\n')"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

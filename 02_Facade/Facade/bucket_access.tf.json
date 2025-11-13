@@ -1,0 +1,27 @@
+{
+  "resource": {
+    "null_resource": {
+      "bucket_access": {
+        "triggers": {
+          "bucket": "bucket_name_2-storage-bucket",
+          "entity": "allAuthenticatedUsers",
+          "role": "READER"
+        },
+        "depends_on": [
+          "null_resource.storage_bucket"
+        ],
+        "provisioner": [
+          {
+            "local-exec": {
+              "interpreter": [
+                "python3",
+                "-c"
+              ],
+              "command": "print('Acceso aplicado al bucket bucket_name_2-storage-bucket con path ./buckets creado el 2025-11-12 23:33:51.165192')"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

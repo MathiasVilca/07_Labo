@@ -1,6 +1,7 @@
 ### NOTA: Este repositorio se creo originalmente el 9/10, pero por un error el repositorio se elimino
 ### NOTA 2: Los archivos relevantes se incluiran en las carpetas con el nombre de cada seccion de laboratorio, las cuales se añadiran poco a poco
 ## Adapter
+Archivos relevantes estan en `01_Adapter/Adapter`
 1. Se podria garantizar la validez del contrato definiendo una interfaz para los Adaptadores, la cual los obligue a definir un metodo `outputs()`. Respecto a pruebas unitarias, se puede probar que la salida del método `outputs()` es la esperada (en este caso, un array de tuplas de tres strings cada una) haciendo uso de `@pytest.mark.parametrize` para definir varios casos y sus salidas esperadas
 
 2. La complejidad temporal de LocalIdentityAdapter tiene de líneas relevantes:
@@ -169,10 +170,10 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Generate main.tf.json
+      - name: Generar main.tf.json
         run: python main.py
 
-      - name: Setup Terraform
+      - name: Instalar Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.7.5
@@ -227,9 +228,119 @@ class StorageBucketModule:
 3. 
  - Considerando que el Facade del bucket es usado en varios módulos y que expone mas atributos como `path`, un cambio de nombre como `path` -> `bucket_path` requeriría refactorizar todas las clases que usen el facade específicamente por `path` (porque `bucket_facade["path"]` daría error, lo cual suponiendo que los 10 módulos usan sería trabajoso
  - Se puede subdividir el Facade (ej. crear varias clases Facade, cada una con un bucket de atributo y cada uno retorne un atributo especifico del bucket, como puede ser `BucketPathFacade` con metodo `outputs()` que retorna `bucket["path"]`, si cambia el nombre, solo se modificaría el Facade) o crear un "mediador" como puede ser una API interna (ej. crear una clase Facade la cual tenga un bucket de atributo, y con un metodo que con un argumento se le pueda especificar el(los) atributo(s) del bucket que se buscan). El primero es mejor en proyectos pequeños con módulos independientes, mientras el segundo es mejor en proyectos grandes con cambios frecuentes de esquema de datos.
-4. Cambios presentes en `02_Facade/main.py`  
+4. Cambios presentes en `02_Facade/Facade/main.py`  
+Relevantes:
+```python
+class StorageBucketModule:
+    def __init__(self, name_base, buckets_dir="./buckets",interpreter="python3"):
+        self.name = f"{name_base}-storage-bucket"
+        self.path = buckets_dir
+        self.created_at = str(datetime.datetime.now())
+        self.interpreter = interpreter
+#.....
+
+    def outputs(self):
+        return {"name": self.name, "path": self.path,"created_at": self.created_at}
+#.....
+class StorageBucketAccessModule:
+#......
+    def resource(self):
+        return {
+            "null_resource": {
+                "bucket_access": {
+                    "triggers": {
+                        "bucket": self.bucket["name"],
+                        "entity": self.entity,
+                        "role": self.role
+                    },
+                    "depends_on": ["null_resource.storage_bucket"],
+                    "provisioner": [{
+                        "local-exec": {
+                            "interpreter": ["python3", "-c"],
+                            "command": (
+                                f"print('Acceso aplicado al bucket {self.bucket['name']} con path {self.bucket['path']} creado el {self.bucket['created_at']}')"
+                            )
+                        }
+                    }]
+                }
+            }
+        }
+
+```
 Ejemplos de ejecucion:
+![Creación de recursos](/02_Facade/4/01_creacion.png)
+![Recrear recurso fuerza cambio](/02_Facade/4/02_cambio_forzado.png)
 
+5. Adicion de `LoggingModule` presente en `02_Facade/Facade/main.py`
+```python
+class LoggingModule:
+    def __init__(self,interpreter):
+        self.interpreter=interpreter
+    def resource(self):
+        return {
+            "null_resource": {
+                "logging": {
+                    "depends_on": ["null_resource.bucket_access"],
+                    "provisioner": [{
+                        "local-exec": {
+                            "interpreter": [self.interpreter, "-c"],
+                            "command": (
+                                "import pathlib; "
+                                "pathlib.Path('logs').mkdir(exist_ok=True); "
+                                "open('logs/iac.log', 'w').write('Ejecución completa\\n')"
+                            )
+                        }
+                    }]
+                }
+            }
+        }
+```
+Ejecución:  
+![](/02_Facade/5/01.png)
+![](/02_Facade/5/02.png)
+![](/02_Facade/5/03.png)
 
- 
+6. Se implemento test en `02_Facade/Facade/test_buckets.py`  
+Ejemplo de ejecución:
+![](/02_Facade/6/01.png)
+Mientras tanto, el pipeline:  
+```yaml
+name: Pipeline simple
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Generar main.tf.json
+        run: python main.py
+
+      - name: Instalar Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+	
+      - name: Ejecuta tests
+        run: pytest -v
+```
+Este pipeline se ejecuta en cada push/PR, genera los archivos, instala terraform y ejecuta tests (no es necesario inicializar terraform, el test mismo lo hace)
+
+## Inversion Control
 
